@@ -1,0 +1,268 @@
+{
+    "name": "Timothy Miller",
+    "tagline": "Junior Software Developer",
+    "github": "Heros-Tempus",
+    "sections": [
+        {
+            "id": "about",
+            "label": "About",
+            "type": "summary",
+            "text": "Junior software developer with a B.S. in Game Programming and Development (summa cum laude, 4.0 GPA) and hands-on experience building applications in Python, Go, and C#, including backend systems, CLI tools, database-driven architectures, and game development. Background spans big data engineering (Spark, Hadoop, Hive), engine-level C++ in Unreal Engine, and cross-platform tool development in Godot. Comfortable working outside the boundaries of a given framework when the problem demands it. Actively building projects and expanding skills through Boot.dev coursework in Go, SQL, and systems programming. Certified in Python (PCEP) and Neo4j."
+        },
+        {
+            "id": "skills",
+            "label": "Skills",
+            "type": "skills",
+            "groups": [
+                {
+                    "category": "Languages",
+                    "items": ["Python", "Go", "C#", "C++", "SQL", "Scala", "GDScript", "PowerShell", "HTML / CSS / JavaScript"]
+                },
+                {
+                    "category": "Game & Graphics",
+                    "items": ["Unreal Engine (C++)", "Godot (GDScript + C# interop)", "Pygame", "HLSL (introductory)", "3DS Max", "Blender", "Photoshop"]
+                },
+                {
+                    "category": "Databases",
+                    "items": ["PostgreSQL", "MongoDB", "Neo4j", "SQL (relational design)"]
+                },
+                {
+                    "category": "Big Data & Cloud",
+                    "items": ["Apache Spark", "Hadoop", "HDFS", "Hive", "AWS (EC2 / Spark deployment)"]
+                },
+                {
+                    "category": "Tools & Platforms",
+                    "items": ["Git", "Linux", "GitHub Pages", ".NET / Visual Studio", "Jira"]
+                },
+                {
+                    "category": "Concepts",
+                    "items": ["OOP", "Functional Programming", "Data Structures & Algorithms", "REST API integration", "CRUD operations", "ETL pipelines", "Big-O analysis"]
+                }
+            ]
+        },
+        {
+            "id": "projects",
+            "label": "Projects",
+            "type": "projects",
+            "items": [
+                {
+                    "name": "KasaPlugControl",
+                    "featured": true,
+                    "description": "Cross-platform battery charge controller using TP-Link Kasa smart plugs. Monitors battery level and automatically toggles charging to extend battery lifespan. Ships a persistent system tray icon, Pushover push notifications for critical alerts, a vigilance mode that triggers platform-specific hibernation on unexpected discharge, and an optional multi-cycle calibration mode. Runs natively on Windows, macOS, and Linux.",
+                    "repo": "KasaPlugControl",
+                    "live": null,
+                    "tags": ["Python", "python-kasa", "pystray", "Pushover API", "Cross-platform"]
+                },
+                {
+                    "name": "Gator",
+                    "featured": true,
+                    "description": "CLI RSS feed aggregator backed by PostgreSQL. Supports user registration and login, feed subscription management, and configurable automatic aggregation that polls feeds on a set interval. Posts are stored and browsable with a configurable result limit. Installable globally via go install.",
+                    "repo": "blog-agg",
+                    "live": null,
+                    "tags": ["Go", "PostgreSQL", "SQL migrations", "CLI"]
+                },
+                {
+                    "name": "Stadium Rental Suite",
+                    "featured": true,
+                    "description": "Two-application tournament management system with a shared MongoDB backend. A C# client lets players build and save their team and submit match inputs. A host-facing web app receives those submissions and manages bracket execution. Both apps coordinate through the database with no direct communication channel. Includes a GitHub Pages landing page as a unified entry point.",
+                    "repos": [
+                        { "label": "Client", "repo": "StadiumRentalClient" },
+                        { "label": "Server", "repo": "Stadium-Rental" }
+                    ],
+                    "live": "https://heros-tempus.github.io/Stadium-Rental/",
+                    "tags": ["C#", ".NET", "MongoDB", "GitHub Pages", "Multi-app architecture"]
+                },
+                {
+                    "name": "Hyperspace Shinies",
+                    "featured": true,
+                    "description": "Static web reference tool for Pokémon Legends: ZA shiny hunting, live on GitHub Pages. Driven entirely by local JSON data — no backend or build step required. Presents zone encounters with expandable type-coded tiles, live search with autocomplete, and filtering logic that accounts for multi-pool spawn interactions.",
+                    "repo": "Hyperspace-Shinies",
+                    "live": "https://heros-tempus.github.io/Hyperspace-Shinies/",
+                    "tags": ["HTML", "CSS", "JavaScript", "JSON", "GitHub Pages"]
+                },
+                {
+                    "name": "Spinning Wheel",
+                    "featured": true,
+                    "description": "Streamer-focused tool built in Godot with the bulk of logic in GDScript. Identified that Godot has no native global hotkey support — a hard requirement for a tool used while another window has focus. Integrated a C# global hotkey library and wrote the interop layer connecting hotkey events to the Godot application, working outside the engine's standard toolset to ship a required feature.",
+                    "repo": "Spinning-Wheel",
+                    "live": null,
+                    "tags": ["GDScript", "C#", "Godot", "C# interop"]
+                },
+                {
+                    "name": "Paintball",
+                    "featured": true,
+                    "description": "Complete paintball game built in Unreal Engine for a university course requiring all gameplay logic in C++ — no Blueprint editor permitted. Procedurally generated mesh geometry by manually computing vertices, normals, tangents, UV coordinates, and triangle indices for dynamic mesh actors. Implemented a shader-driven countdown effect and a noise-based dissolve effect using dynamic material instances and USF pixel shader files. Architected a full game state machine using a C++ enum exposed to Blueprints, a custom PlayerController class, a UMG HUD widget, and Blueprint-callable hit detection functions.",
+                    "repo": "Paintball",
+                    "live": null,
+                    "tags": ["C++", "Unreal Engine", "HLSL / USF", "Procedural mesh generation"]
+                },
+                {
+                    "name": "Fuzzy Farmer",
+                    "featured": false,
+                    "archive": false,
+                    "description": "Fully realized Unreal Engine game featuring original 3D models and textures created in 3DS Max and Photoshop, procedurally generated trees from Blender, composed background music, and custom foley audio. End-to-end game asset creation from modeling through integration into a real-time engine.",
+                    "repo": "Fuzzy-Farmer",
+                    "live": null,
+                    "tags": ["Unreal Engine", "3DS Max", "Blender", "Photoshop"]
+                },
+                {
+                    "name": "Team Type Calculator",
+                    "featured": false,
+                    "archive": false,
+                    "description": "Desktop GUI application built in Python with Tkinter to evaluate Pokémon team type coverage and identify weaknesses.",
+                    "repo": "team_type_calc",
+                    "live": null,
+                    "tags": ["Python", "Tkinter"]
+                },
+                {
+                    "name": "Password Generator",
+                    "featured": false,
+                    "archive": false,
+                    "description": "CLI tool that generates cryptographically secure passwords with configurable length and character composition. In daily personal use.",
+                    "repo": "Password-Generator",
+                    "live": null,
+                    "tags": ["Python", "CLI"]
+                },
+                {
+                    "name": "pokedexcli",
+                    "featured": false,
+                    "archive": false,
+                    "description": "Go CLI REPL that queries the PokéAPI over HTTP to retrieve and display game-area encounter data, with stateful session management across commands. Built as part of the Boot.dev curriculum.",
+                    "repo": "pokedexcli",
+                    "live": null,
+                    "tags": ["Go", "REST API", "CLI", "Boot.dev"]
+                },
+                {
+                    "name": "Static Site Generator",
+                    "featured": false,
+                    "archive": false,
+                    "description": "Python tool that converts Markdown documents into a complete static HTML site. Generated site deployed and live on GitHub Pages. Built as part of the Boot.dev curriculum.",
+                    "repo": "static-site-generator",
+                    "live": null,
+                    "tags": ["Python", "Markdown", "GitHub Pages", "Boot.dev"]
+                },
+                {
+                    "name": "AI Agent",
+                    "featured": false,
+                    "archive": false,
+                    "description": "Python AI agent working with external API calls and structured response handling. Built as part of the Boot.dev curriculum.",
+                    "repo": "aiagent",
+                    "live": null,
+                    "tags": ["Python", "AI agents", "Boot.dev"]
+                },
+                {
+                    "name": "Asteroids",
+                    "featured": false,
+                    "archive": false,
+                    "description": "Recreation of the classic Asteroids arcade game built in Python using Pygame. Built as part of the Boot.dev curriculum.",
+                    "repo": "asteroids",
+                    "live": null,
+                    "tags": ["Python", "Pygame", "Boot.dev"]
+                }
+            ]
+        },
+        {
+            "id": "experience",
+            "label": "Experience",
+            "type": "experience",
+            "items": [
+                {
+                    "title": "Package Handler",
+                    "org": "FedEx",
+                    "location": "Billerica, MA",
+                    "date": "Jan 2025 – Present",
+                    "bullets": [
+                        "Process packages in a high-volume warehouse environment while maintaining accuracy, speed, and safety.",
+                        "Demonstrate consistent reliability and performance in physically demanding, time-sensitive operations."
+                    ]
+                },
+                {
+                    "title": "Preloader",
+                    "org": "UPS",
+                    "location": "Stratham, NH",
+                    "date": "Oct 2024 – Jan 2025",
+                    "bullets": [
+                        "Loaded and organized packages for time-sensitive delivery routes in a fast-paced morning operation.",
+                        "Maintained efficiency and attention to detail while working under strict deadlines."
+                    ]
+                },
+                {
+                    "title": "Senior Associate",
+                    "org": "Infosys",
+                    "location": "Remote",
+                    "date": "Aug 2021 – Jun 2024",
+                    "bullets": [
+                        "Earned the Neo4j Certified Professional credential through independent self-directed study of graph data modeling and Cypher query writing.",
+                        "Earned the PCEP certification from the Python Institute through dedicated self-study.",
+                        "Provided project support including Jira ticket management and issue tracking in an enterprise environment."
+                    ]
+                },
+                {
+                    "title": "Software Associate",
+                    "org": "Revature",
+                    "location": "Remote",
+                    "date": "Apr 2021 – Aug 2021",
+                    "bullets": [
+                        "Completed 400 hours of big data engineering training covering Scala, Spark, Hadoop, HDFS, and Hive.",
+                        "Built a Scala CLI application performing CRUD operations on JSON data to manage user and game state.",
+                        "Contributed to a team Spark project analyzing real COVID datasets, calculating per-location daily case changes and growth factors.",
+                        "Deployed Spark jobs to AWS cloud infrastructure.",
+                        "Used Hive to analyze sample datasets and answer scenario-based business questions."
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "education",
+            "label": "Education",
+            "type": "education",
+            "items": [
+                {
+                    "degree": "B.S. Game Programming and Development",
+                    "institution": "Southern New Hampshire University",
+                    "date": "2016 – 2020",
+                    "details": [
+                        "Graduated summa cum laude, 4.0 GPA",
+                        "Coursework: C++ in Unreal Engine, HLSL shader programming, 3D modeling and texturing (3DS Max, Photoshop), C# programming, game design, software engineering principles, data structures and algorithms",
+                        "Honors: National Society of Collegiate Scholars, Alpha Sigma Lambda"
+                    ]
+                },
+                {
+                    "degree": "Boot.dev Coursework",
+                    "institution": "Boot.dev",
+                    "date": "Dec 2025 – Present",
+                    "details": [
+                        "Python, Go, SQL, Linux/Unix, Git, OOP, functional programming, data structures, algorithms, Big-O analysis, HTTP client development, relational database design, memory management in C"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "certifications",
+            "label": "Certifications",
+            "type": "certifications",
+            "items": [
+                {
+                    "name": "PCEP – Certified Entry-Level Python Programmer",
+                    "issuer": "Python Institute",
+                    "date": "Apr 2023"
+                },
+                {
+                    "name": "Neo4j Certified Professional",
+                    "issuer": "Neo4j",
+                    "date": "Oct 2021"
+                },
+                {
+                    "name": "Python (Basic)",
+                    "issuer": "HackerRank",
+                    "date": "Sep 2024"
+                },
+                {
+                    "name": "Problem Solving (Basic)",
+                    "issuer": "HackerRank",
+                    "date": "Sep 2024"
+                }
+            ]
+        }
+    ]
+}
