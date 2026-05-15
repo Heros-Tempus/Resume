@@ -67,7 +67,7 @@
                     "description": "Two-application tournament management system with a shared MongoDB backend. A C# client lets players build and save their team and submit match inputs. A host-facing web app receives those submissions and manages bracket execution. Both apps coordinate through the database with no direct communication channel. Includes a GitHub Pages landing page as a unified entry point.",
                     "repos": [
                         { "label": "Client", "repo": "StadiumRentalClient" },
-                        { "label": "Server", "repo": "Stadium-Rental" }
+                        { "label": "Server", "repo": "StadiumRentalServer" }
                     ],
                     "live": "https://heros-tempus.github.io/Stadium-Rental/",
                     "tags": ["C#", ".NET", "MongoDB", "GitHub Pages", "Multi-app architecture"]
