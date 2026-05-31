@@ -35,6 +35,12 @@ function renderNav(sections) {
         a.textContent = s.label;
         nav.appendChild(a);
     });
+
+    const dl = el('a', 'nav-download');
+    dl.href = 'resume.docx';
+    dl.download = 'Timothy_Miller_Resume.docx';
+    dl.textContent = '⬇ Download CV';
+    nav.appendChild(dl);
 }
 
 // ─── Sections ────────────────────────────────────────────────────────────────
