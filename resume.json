@@ -24,7 +24,7 @@
                 },
                 {
                     "category": "Databases",
-                    "items": ["PostgreSQL", "MongoDB", "Neo4j", "SQL (relational design)"]
+                    "items": ["PostgreSQL", "SQLite", "MongoDB", "Neo4j", "SQL (relational design)"]
                 },
                 {
                     "category": "Big Data & Cloud",
