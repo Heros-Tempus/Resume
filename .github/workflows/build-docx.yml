@@ -1,0 +1,39 @@
+name: Build Resume DOCX
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - resume.json
+      - scripts/build-docx.js
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build resume.docx
+        run: node scripts/build-docx.js
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add resume.docx
+          git diff --staged --quiet || git commit -m "chore: rebuild resume.docx from resume.json"
+          git push

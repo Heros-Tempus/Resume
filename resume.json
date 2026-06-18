@@ -32,7 +32,7 @@
                 },
                 {
                     "category": "Tools & Platforms",
-                    "items": ["Git", "Linux", "GitHub Pages", ".NET / Visual Studio", "Jira"]
+                    "items": ["Git", "Docker", "Linux", "GitHub Pages", ".NET / Visual Studio", "Jira"]
                 },
                 {
                     "category": "Concepts",
