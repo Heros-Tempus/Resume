@@ -1,147 +1,110 @@
 #!/usr/bin/env node
 // scripts/build-docx.js
 //
-// Converts resume.json → Timothy_Miller_Resume.docx
+// Converts resume.json → resume.docx
 //
 // Usage (from repo root):
 //   node scripts/build-docx.js
 //
-// Output: resume.docx  (repo root, next to index.html)
-//
 // Requirements:
 //   npm install docx
-//   (one-time; no package.json needed — installs locally in node_modules/)
 
 'use strict';
 
 const fs   = require('fs');
 const path = require('path');
 
-// Resolve paths relative to repo root (one level up from scripts/)
-const REPO_ROOT  = path.resolve(__dirname, '..');
-const JSON_PATH  = path.join(REPO_ROOT, 'resume.json');
-const OUT_PATH   = path.join(REPO_ROOT, 'resume.docx');
+const REPO_ROOT = path.resolve(__dirname, '..');
+const JSON_PATH = path.join(REPO_ROOT, 'resume.json');
+const OUT_PATH  = path.join(REPO_ROOT, 'resume.docx');
 
 const {
-    Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+    Document, Packer, Paragraph, TextRun,
     AlignmentType, LevelFormat, ExternalHyperlink,
-    BorderStyle, WidthType, ShadingType, VerticalAlign,
-    TabStopType, UnderlineType,
+    BorderStyle, TabStopType,
 } = require('docx');
 
-// ─── Palette (mirrors style.css CSS variables) ────────────────────────────────
-const ACCENT        = '1A3A5C';   // --accent
-const ACCENT_LIGHT  = '2A5A8C';   // --accent-light
-const TEXT_MUTED    = '555555';   // --text-muted
-const BG_ALT        = 'E9EBEE';   // --bg-alt
+// ─── Constants ────────────────────────────────────────────────────────────────
+const FONT       = 'Garamond';
+const TEXT_MUTED = '555555';   // dates, muted text
+const RULE_COLOR = 'AAAAAA';   // thin horizontal rules
 
-// ─── Page geometry ────────────────────────────────────────────────────────────
 // US Letter, 0.75" margins
 const PAGE_W    = 12240;
 const PAGE_H    = 15840;
-const MARGIN    = 1080;                    // 0.75 inches in DXA
-const CONTENT_W = PAGE_W - MARGIN * 2;    // 10080 DXA
+const MARGIN    = 1080;
+const CONTENT_W = PAGE_W - MARGIN * 2;   // 10080 DXA
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Thick accent-coloured horizontal rule (bottom border on an empty paragraph). */
-function accentRule() {
+// Thin grey rule drawn as a bottom-border on an empty paragraph
+function rule() {
     return new Paragraph({
-        border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: ACCENT, space: 1 } },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: RULE_COLOR, space: 1 } },
         spacing: { before: 0, after: 80 },
         children: [],
     });
 }
 
-/** Section heading: uppercase, spaced letters, accent colour, underline rule. */
+// Uppercase section heading with a thin rule below
 function sectionHeading(label) {
     return new Paragraph({
-        spacing: { before: 280, after: 60 },
-        border: { bottom: { style: BorderStyle.SINGLE, size: 10, color: ACCENT, space: 4 } },
+        spacing: { before: 260, after: 60 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: RULE_COLOR, space: 4 } },
         children: [
             new TextRun({
                 text: label.toUpperCase(),
                 bold: true,
-                size: 22,
-                color: ACCENT,
-                font: 'Arial',
-                characterSpacing: 80,
+                size: 20,
+                font: FONT,
+                characterSpacing: 60,
             }),
         ],
     });
 }
 
-/** Dimmed uppercase sublabel (e.g. "ADDITIONAL PROJECTS"). */
-function subLabel(text) {
-    return new Paragraph({
-        spacing: { before: 200, after: 80 },
-        children: [
-            new TextRun({
-                text: text.toUpperCase(),
-                bold: true,
-                size: 18,
-                color: TEXT_MUTED,
-                font: 'Arial',
-                characterSpacing: 80,
-            }),
-        ],
-    });
-}
-
-/** Clickable hyperlink run. */
-function hyperlink(text, url) {
+// Clickable hyperlink rendered in black (no blue, matches PDF appearance)
+function link(text, url) {
     return new ExternalHyperlink({
         link: url,
         children: [
-            new TextRun({
-                text,
-                color: ACCENT_LIGHT,
-                size: 18,
-                font: 'Arial',
-                underline: { type: UnderlineType.SINGLE },
-            }),
+            new TextRun({ text, size: 18, font: FONT, color: '000000' }),
         ],
     });
 }
 
-/** Inline tag rendered as [Tag] in accent colour. */
-function tagRun(text) {
-    return new TextRun({
-        text: `[${text}]`,
-        color: ACCENT_LIGHT,
-        size: 16,
-        font: 'Arial',
-        bold: true,
-    });
-}
-
-/** Empty paragraph used purely for vertical spacing. */
 function spacer(before = 0, after = 0) {
     return new Paragraph({ spacing: { before, after }, children: [] });
 }
 
+// Selects the best URL to display beside a project name.
+// Prefers the live URL; falls back to the GitHub repo URL.
+function projectUrl(p) {
+    if (p.live) return p.live;
+    if (p.repo) return `https://github.com/Heros-Tempus/${p.repo}`;
+    if (p.repos && p.repos.length) return `https://github.com/Heros-Tempus/${p.repos[0].repo}`;
+    return null;
+}
+
 // ─── Section builders ─────────────────────────────────────────────────────────
 
+// Centered name + GitHub URL, no tagline — matches PDF header layout
 function buildHeader(data) {
     const ghUrl = `https://github.com/${data.github}`;
     return [
         new Paragraph({
+            alignment: AlignmentType.CENTER,
             spacing: { before: 0, after: 40 },
             children: [
-                new TextRun({ text: data.name, bold: true, size: 52, font: 'Arial', color: ACCENT }),
+                new TextRun({ text: data.name, bold: true, size: 48, font: FONT }),
             ],
         }),
         new Paragraph({
-            spacing: { before: 0, after: 60 },
-            children: [
-                new TextRun({ text: data.tagline, size: 24, font: 'Arial', color: TEXT_MUTED }),
-            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 0, after: 140 },
+            children: [link(`github.com/${data.github}`, ghUrl)],
         }),
-        new Paragraph({
-            spacing: { before: 0, after: 200 },
-            children: [hyperlink(`github.com/${data.github}`, ghUrl)],
-        }),
-        accentRule(),
+        rule(),
     ];
 }
 
@@ -150,127 +113,65 @@ function buildSummary(s) {
         sectionHeading(s.label),
         new Paragraph({
             spacing: { before: 80, after: 0 },
-            children: [new TextRun({ text: s.text, size: 20, font: 'Arial' })],
+            children: [new TextRun({ text: s.text, size: 19, font: FONT })],
         }),
     ];
 }
 
+// Inline "Bold Category: items" — one paragraph per group, no table
 function buildSkills(s) {
-    // Two-column table: spaced-caps category name | dot-joined items
-    // Odd rows get a light grey background (BG_ALT), even rows stay white — Option B.
-    const noBorder  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-    const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-    const colL      = Math.round(CONTENT_W * 0.28);
-    const colR      = CONTENT_W - colL;
-
-    const rows = s.groups.map((group, idx) => {
-        const fill    = idx % 2 === 0 ? BG_ALT : 'FFFFFF';
-        const shading = { fill, type: ShadingType.CLEAR };
-
-        return new TableRow({
-            children: [
-                new TableCell({
-                    borders: noBorders,
-                    shading,
-                    width: { size: colL, type: WidthType.DXA },
-                    margins: { top: 80, bottom: 80, left: 100, right: 120 },
-                    verticalAlign: VerticalAlign.TOP,
-                    children: [
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: group.category.toUpperCase(),
-                                    bold: true,
-                                    size: 16,
-                                    font: 'Arial',
-                                    color: TEXT_MUTED,
-                                    characterSpacing: 60,
-                                }),
-                            ],
-                        }),
-                    ],
-                }),
-                new TableCell({
-                    borders: noBorders,
-                    shading,
-                    width: { size: colR, type: WidthType.DXA },
-                    margins: { top: 80, bottom: 80, left: 0, right: 100 },
-                    verticalAlign: VerticalAlign.TOP,
-                    children: [
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: group.items.join('  ·  '),
-                                    size: 19,
-                                    font: 'Arial',
-                                }),
-                            ],
-                        }),
-                    ],
-                }),
-            ],
-        });
+    const paras = [sectionHeading(s.label), spacer(60, 0)];
+    s.groups.forEach(group => {
+        paras.push(
+            new Paragraph({
+                spacing: { before: 0, after: 30 },
+                children: [
+                    new TextRun({ text: group.category + ': ', bold: true, size: 19, font: FONT }),
+                    new TextRun({ text: group.items.join(', '), size: 19, font: FONT }),
+                ],
+            })
+        );
     });
-
-    return [
-        sectionHeading(s.label),
-        spacer(80, 0),
-        new Table({
-            width: { size: CONTENT_W, type: WidthType.DXA },
-            columnWidths: [colL, colR],
-            rows,
-        }),
-    ];
+    return paras;
 }
 
+// Project name (bold, black) + full URL on the same line; bullets below; Stack line last
 function buildProjectCard(p, featured) {
     const paras = [];
-
-    // Collect link objects
-    const links = [];
-    if (p.repo)  links.push({ label: 'GitHub', url: `https://github.com/Heros-Tempus/${p.repo}` });
-    if (p.repos) p.repos.forEach(r => links.push({ label: r.label, url: `https://github.com/Heros-Tempus/${r.repo}` }));
-    if (p.live)  links.push({ label: 'Live', url: p.live });
-
-    // Name (left) + links (right) on one line via right-aligned tab stop
-    const linkRuns = [];
-    links.forEach((lk, i) => {
-        if (i > 0) linkRuns.push(new TextRun({ text: '  ', size: 18, font: 'Arial' }));
-        linkRuns.push(hyperlink(lk.label, lk.url));
-    });
+    const url   = projectUrl(p);
 
     paras.push(
         new Paragraph({
-            spacing: { before: featured ? 160 : 80, after: 40 },
-            tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
+            spacing: { before: featured ? 140 : 80, after: 30 },
             children: [
-                new TextRun({ text: p.name, bold: true, size: featured ? 22 : 20, font: 'Arial', color: ACCENT }),
-                ...(linkRuns.length
-                    ? [new TextRun({ text: '\t', size: 18, font: 'Arial' }), ...linkRuns]
-                    : []),
+                new TextRun({ text: p.name, bold: true, size: featured ? 22 : 20, font: FONT }),
+                ...(url ? [
+                    new TextRun({ text: ' ', size: 19, font: FONT }),
+                    link(url, url),
+                ] : []),
             ],
         })
     );
 
-    if (p.description) {
+    (p.bullets || []).forEach(b =>
         paras.push(
             new Paragraph({
-                spacing: { before: 0, after: 40 },
-                children: [new TextRun({ text: p.description, size: 19, font: 'Arial' })],
+                numbering: { reference: 'bullets', level: 0 },
+                spacing: { before: 0, after: 20 },
+                children: [new TextRun({ text: b, size: 19, font: FONT })],
             })
-        );
-    }
+        )
+    );
 
     if (p.tags && p.tags.length) {
-        const tagRuns = [];
-        p.tags.forEach((t, i) => {
-            if (i > 0) tagRuns.push(new TextRun({ text: '  ', size: 16, font: 'Arial' }));
-            tagRuns.push(tagRun(t));
-        });
+        const isBootDev = p.tags.includes('Boot.dev');
+        const mainTags  = p.tags.filter(t => t !== 'Boot.dev');
+        const stackText = 'Stack: ' + mainTags.join(', ') + (isBootDev ? ' (Boot.dev)' : '');
         paras.push(
             new Paragraph({
-                spacing: { before: 0, after: featured ? 120 : 60 },
-                children: tagRuns,
+                numbering: { reference: 'bullets', level: 0 },
+                spacing: { before: 0, after: featured ? 100 : 60 },
+                children: [new TextRun({ text: stackText, size: 19, font: FONT })],
             })
         );
     }
@@ -286,39 +187,53 @@ function buildProjects(s) {
     featured.forEach(p => paras.push(...buildProjectCard(p, true)));
 
     if (minor.length) {
-        paras.push(subLabel('Additional Projects'));
+        paras.push(
+            new Paragraph({
+                spacing: { before: 180, after: 60 },
+                children: [
+                    new TextRun({
+                        text: 'ADDITIONAL PROJECTS',
+                        bold: true,
+                        size: 18,
+                        font: FONT,
+                        color: TEXT_MUTED,
+                        characterSpacing: 60,
+                    }),
+                ],
+            })
+        );
         minor.forEach(p => paras.push(...buildProjectCard(p, false)));
     }
 
     return paras;
 }
 
+// Title (bold) | Date, then Org (italic) | Location (italic) — two separate lines with tab stops
 function buildExperience(s) {
     const paras = [sectionHeading(s.label)];
 
     s.items.forEach((e, idx) => {
         paras.push(
             new Paragraph({
-                spacing: { before: idx === 0 ? 100 : 200, after: 30 },
+                spacing: { before: idx === 0 ? 100 : 180, after: 20 },
                 tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
                 children: [
-                    new TextRun({ text: e.title, bold: true, size: 22, font: 'Arial' }),
-                    new TextRun({ text: '\t', size: 20, font: 'Arial' }),
-                    new TextRun({ text: e.date, size: 19, font: 'Arial', color: TEXT_MUTED }),
+                    new TextRun({ text: e.title, bold: true, size: 22, font: FONT }),
+                    new TextRun({ text: '\t', size: 19, font: FONT }),
+                    new TextRun({ text: e.date, size: 19, font: FONT, color: TEXT_MUTED }),
                 ],
             })
         );
         paras.push(
             new Paragraph({
                 spacing: { before: 0, after: 40 },
+                tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
                 children: [
-                    new TextRun({
-                        text: e.location ? `${e.org} · ${e.location}` : e.org,
-                        size: 19,
-                        font: 'Arial',
-                        color: ACCENT_LIGHT,
-                        bold: true,
-                    }),
+                    new TextRun({ text: e.org, size: 19, font: FONT, italics: true }),
+                    ...(e.location ? [
+                        new TextRun({ text: '\t', size: 19, font: FONT }),
+                        new TextRun({ text: e.location, size: 19, font: FONT, italics: true }),
+                    ] : []),
                 ],
             })
         );
@@ -327,7 +242,7 @@ function buildExperience(s) {
                 new Paragraph({
                     numbering: { reference: 'bullets', level: 0 },
                     spacing: { before: 0, after: 20 },
-                    children: [new TextRun({ text: b, size: 19, font: 'Arial' })],
+                    children: [new TextRun({ text: b, size: 19, font: FONT })],
                 })
             )
         );
@@ -336,101 +251,86 @@ function buildExperience(s) {
     return paras;
 }
 
+// Institution (bold, alone) | degree+subtitle (italic) | date — then plain-text details.
+// Boot.dev has no degree field: its first detail serves as the italic subtitle with the date.
 function buildEducation(s) {
     const paras = [sectionHeading(s.label)];
 
     s.items.forEach((e, idx) => {
+        // Institution heading — no date on this line
         paras.push(
             new Paragraph({
-                spacing: { before: idx === 0 ? 100 : 200, after: 30 },
-                tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
+                spacing: { before: idx === 0 ? 100 : 200, after: 20 },
                 children: [
-                    new TextRun({ text: e.degree, bold: true, size: 22, font: 'Arial' }),
-                    new TextRun({ text: '\t', size: 20, font: 'Arial' }),
-                    new TextRun({ text: e.date, size: 19, font: 'Arial', color: TEXT_MUTED }),
+                    new TextRun({ text: e.institution, bold: true, size: 22, font: FONT }),
                 ],
             })
         );
-        paras.push(
-            new Paragraph({
-                spacing: { before: 0, after: 40 },
-                children: [
-                    new TextRun({
-                        text: e.institution,
-                        size: 19,
-                        font: 'Arial',
-                        color: ACCENT_LIGHT,
-                        bold: true,
-                    }),
-                ],
-            })
-        );
-        (e.details || []).forEach(d =>
+
+        if (e.degree) {
+            // Degree + optional honours subtitle on the next line; date right-aligned
+            const degreeText = e.subtitle ? `${e.degree}. ${e.subtitle}` : e.degree;
             paras.push(
                 new Paragraph({
-                    numbering: { reference: 'bullets', level: 0 },
-                    spacing: { before: 0, after: 20 },
-                    children: [new TextRun({ text: d, size: 19, font: 'Arial' })],
+                    spacing: { before: 0, after: 40 },
+                    tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
+                    children: [
+                        new TextRun({ text: degreeText, size: 19, font: FONT, italics: true }),
+                        new TextRun({ text: '\t', size: 19, font: FONT }),
+                        new TextRun({ text: e.date, size: 19, font: FONT, color: TEXT_MUTED }),
+                    ],
                 })
-            )
-        );
+            );
+            // Details as plain (non-italic) paragraphs
+            (e.details || []).forEach(d =>
+                paras.push(
+                    new Paragraph({
+                        spacing: { before: 0, after: 20 },
+                        children: [new TextRun({ text: d, size: 19, font: FONT })],
+                    })
+                )
+            );
+        } else {
+            // No degree (e.g. Boot.dev): first detail is italic with date; rest are plain
+            (e.details || []).forEach((d, di) =>
+                paras.push(
+                    new Paragraph({
+                        spacing: { before: 0, after: 20 },
+                        ...(di === 0 ? { tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }] } : {}),
+                        children: [
+                            new TextRun({ text: d, size: 19, font: FONT, italics: true }),
+                            ...(di === 0 ? [
+                                new TextRun({ text: '\t', size: 19, font: FONT }),
+                                new TextRun({ text: e.date, size: 19, font: FONT, color: TEXT_MUTED }),
+                            ] : []),
+                        ],
+                    })
+                )
+            );
+        }
     });
 
     return paras;
 }
 
+// Plain bullet list: "Name, Issuer, Date" — matches the PDF's simple cert list
 function buildCertifications(s) {
-    const noBorder  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-    const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-    const col       = Math.round(CONTENT_W / 2);
-
-    const rows = [];
-    for (let i = 0; i < s.items.length; i += 2) {
-        const pair = [s.items[i], s.items[i + 1]].filter(Boolean);
-        rows.push(
-            new TableRow({
-                children: pair.map(c =>
-                    new TableCell({
-                        borders: noBorders,
-                        width: { size: col, type: WidthType.DXA },
-                        shading: { fill: BG_ALT, type: ShadingType.CLEAR },
-                        margins: { top: 80, bottom: 80, left: 100, right: 100 },
-                        children: [
-                            new Paragraph({
-                                spacing: { before: 0, after: 20 },
-                                children: [
-                                    new TextRun({ text: c.name, bold: true, size: 19, font: 'Arial' }),
-                                ],
-                            }),
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: `${c.issuer} · ${c.date}`,
-                                        size: 17,
-                                        font: 'Arial',
-                                        color: TEXT_MUTED,
-                                    }),
-                                ],
-                            }),
-                        ],
-                    })
-                ),
+    const paras = [sectionHeading(s.label), spacer(60, 0)];
+    s.items.forEach(c =>
+        paras.push(
+            new Paragraph({
+                numbering: { reference: 'bullets', level: 0 },
+                spacing: { before: 0, after: 30 },
+                children: [
+                    new TextRun({ text: `${c.name}, ${c.issuer}, ${c.date}`, size: 19, font: FONT }),
+                ],
             })
-        );
-    }
-
-    return [
-        sectionHeading(s.label),
-        spacer(80, 0),
-        new Table({
-            width: { size: CONTENT_W, type: WidthType.DXA },
-            columnWidths: [col, col],
-            rows,
-        }),
-    ];
+        )
+    );
+    return paras;
 }
 
-// ─── Dispatch table ───────────────────────────────────────────────────────────
+// ─── Dispatch ─────────────────────────────────────────────────────────────────
 
 const RENDERERS = {
     summary:        buildSummary,
@@ -449,7 +349,7 @@ const children = [
     ...buildHeader(data),
     ...data.sections.flatMap(s => {
         const fn = RENDERERS[s.type];
-        if (!fn) { console.warn(`Warning: no renderer for section type "${s.type}" — skipped.`); return []; }
+        if (!fn) { console.warn(`Warning: no renderer for type "${s.type}" — skipped.`); return []; }
         return fn(s);
     }),
 ];
@@ -461,14 +361,14 @@ const doc = new Document({
             levels: [{
                 level: 0,
                 format: LevelFormat.BULLET,
-                text: '\u2022',
+                text: '•',
                 alignment: AlignmentType.LEFT,
                 style: { paragraph: { indent: { left: 480, hanging: 240 } } },
             }],
         }],
     },
     styles: {
-        default: { document: { run: { font: 'Arial', size: 20 } } },
+        default: { document: { run: { font: FONT, size: 20 } } },
     },
     sections: [{
         properties: {

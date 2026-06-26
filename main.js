@@ -173,11 +173,17 @@ function buildProjectCard(p, size) {
     if (links.children.length) header.appendChild(links);
     card.appendChild(header);
 
-    // ── Description ──
-    if (p.description) {
-        const desc = el('p');
-        desc.textContent = p.description;
-        card.appendChild(desc);
+    // ── Bullets ──
+    if (p.bullets && p.bullets.length) {
+        const body = el('div', 'entry-body');
+        const ul = el('ul');
+        p.bullets.forEach(b => {
+            const li = el('li');
+            li.textContent = b;
+            ul.appendChild(li);
+        });
+        body.appendChild(ul);
+        card.appendChild(body);
     }
 
     // ── Tags ──
@@ -249,18 +255,22 @@ function renderEducation(s) {
     s.items.forEach(e => {
         const entry = el('div', 'education-entry');
 
+        // Institution is the primary heading; date sits beside it
         const header = el('div', 'entry-header');
-        const degree = el('h3');
-        degree.textContent = e.degree;
+        const inst = el('h3');
+        inst.textContent = e.institution;
         const date = el('span', 'entry-date');
         date.textContent = e.date;
-        header.appendChild(degree);
+        header.appendChild(inst);
         header.appendChild(date);
         entry.appendChild(header);
 
-        const inst = el('p', 'entry-org');
-        inst.textContent = e.institution;
-        entry.appendChild(inst);
+        // Degree + optional honours subtitle below the institution
+        if (e.degree) {
+            const deg = el('p', 'entry-org');
+            deg.textContent = e.subtitle ? e.degree + '. ' + e.subtitle : e.degree;
+            entry.appendChild(deg);
+        }
 
         if (e.details && e.details.length) {
             const body = el('div', 'entry-body');
