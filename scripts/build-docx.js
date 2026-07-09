@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // scripts/build-docx.js
 //
-// Converts resume.json → resume.docx
+// Converts resume.json → resume.docx (Public & Private versions)
 //
 // Usage (from repo root):
 //   node scripts/build-docx.js
@@ -14,9 +14,12 @@
 const fs   = require('fs');
 const path = require('path');
 
-const REPO_ROOT = path.resolve(__dirname, '..');
-const JSON_PATH = path.join(REPO_ROOT, 'resume.json');
-const OUT_PATH  = path.join(REPO_ROOT, 'resume.docx');
+const REPO_ROOT   = path.resolve(__dirname, '..');
+const JSON_PATH   = path.join(REPO_ROOT, 'resume.json');
+const SECRET_PATH = path.join(REPO_ROOT, '.secret', 'personal_info.txt');
+
+const PUBLIC_OUT_PATH  = path.join(REPO_ROOT, 'resume.docx');
+const PRIVATE_OUT_PATH = path.join(REPO_ROOT, '.secret', 'resume.docx');
 
 const {
     Document, Packer, Paragraph, TextRun,
@@ -26,18 +29,16 @@ const {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FONT       = 'Garamond';
-const TEXT_MUTED = '555555';   // dates, muted text
-const RULE_COLOR = 'AAAAAA';   // thin horizontal rules
+const TEXT_MUTED = '555555';   
+const RULE_COLOR = 'AAAAAA';   
 
-// US Letter, 0.75" margins
 const PAGE_W    = 12240;
 const PAGE_H    = 15840;
 const MARGIN    = 1080;
-const CONTENT_W = PAGE_W - MARGIN * 2;   // 10080 DXA
+const CONTENT_W = PAGE_W - MARGIN * 2;   
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Thin grey rule drawn as a bottom-border on an empty paragraph
 function rule() {
     return new Paragraph({
         border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: RULE_COLOR, space: 1 } },
@@ -46,7 +47,6 @@ function rule() {
     });
 }
 
-// Uppercase section heading with a thin rule below
 function sectionHeading(label) {
     return new Paragraph({
         spacing: { before: 260, after: 60 },
@@ -63,7 +63,6 @@ function sectionHeading(label) {
     });
 }
 
-// Clickable hyperlink rendered in black (no blue, matches PDF appearance)
 function link(text, url) {
     return new ExternalHyperlink({
         link: url,
@@ -77,8 +76,6 @@ function spacer(before = 0, after = 0) {
     return new Paragraph({ spacing: { before, after }, children: [] });
 }
 
-// Selects the best URL to display beside a project name.
-// Prefers the live URL; falls back to the GitHub repo URL.
 function projectUrl(p) {
     if (p.live) return p.live;
     if (p.repo) return `https://github.com/Heros-Tempus/${p.repo}`;
@@ -88,24 +85,57 @@ function projectUrl(p) {
 
 // ─── Section builders ─────────────────────────────────────────────────────────
 
-// Centered name + GitHub URL, no tagline — matches PDF header layout
-function buildHeader(data) {
+// Centered name + GitHub URL (Public) or full metadata (Private)
+function buildHeader(data, secretInfo = null) {
     const ghUrl = `https://github.com/${data.github}`;
-    return [
+    
+    // Base Header Elements
+    const elements = [
         new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { before: 0, after: 40 },
             children: [
                 new TextRun({ text: data.name, bold: true, size: 48, font: FONT }),
             ],
-        }),
-        new Paragraph({
+        })
+    ];
+
+    if (secretInfo) {
+        // Private Layout: Name followed by a contact line: Phone · Email · Location · GitHub
+        const contactLine = [];
+        if (secretInfo.phone) contactLine.push(new TextRun({ text: secretInfo.phone, size: 18, font: FONT }));
+        if (secretInfo.email) contactLine.push(new TextRun({ text: secretInfo.email, size: 18, font: FONT }));
+        if (secretInfo.location) contactLine.push(new TextRun({ text: secretInfo.location, size: 18, font: FONT }));
+        
+        // Add elements with visual separators
+        const children = [];
+        contactLine.forEach((run, index) => {
+            children.push(run);
+            if (index < contactLine.length - 1) {
+                children.push(new TextRun({ text: '  ·  ', size: 18, font: FONT, color: TEXT_MUTED }));
+            }
+        });
+        
+        // Append GitHub Link to the end of the line
+        if (children.length > 0) children.push(new TextRun({ text: '  ·  ', size: 18, font: FONT, color: TEXT_MUTED }));
+        children.push(link(`github.com/${data.github}`, ghUrl));
+
+        elements.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 0, after: 140 },
+            children: children
+        }));
+    } else {
+        // Standard Public Layout
+        elements.push(new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { before: 0, after: 140 },
             children: [link(`github.com/${data.github}`, ghUrl)],
-        }),
-        rule(),
-    ];
+        }));
+    }
+
+    elements.push(rule());
+    return elements;
 }
 
 function buildSummary(s) {
@@ -118,7 +148,6 @@ function buildSummary(s) {
     ];
 }
 
-// Inline "Bold Category: items" — one paragraph per group, no table
 function buildSkills(s) {
     const paras = [sectionHeading(s.label), spacer(60, 0)];
     s.groups.forEach(group => {
@@ -135,7 +164,6 @@ function buildSkills(s) {
     return paras;
 }
 
-// Project name (bold, black) + full URL on the same line; bullets below; Stack line last
 function buildProjectCard(p, featured) {
     const paras = [];
     const url   = projectUrl(p);
@@ -208,7 +236,6 @@ function buildProjects(s) {
     return paras;
 }
 
-// Title (bold) | Date, then Org (italic) | Location (italic) — two separate lines with tab stops
 function buildExperience(s) {
     const paras = [sectionHeading(s.label)];
 
@@ -251,13 +278,10 @@ function buildExperience(s) {
     return paras;
 }
 
-// Institution (bold, alone) | degree+subtitle (italic) | date — then plain-text details.
-// Boot.dev has no degree field: its first detail serves as the italic subtitle with the date.
 function buildEducation(s) {
     const paras = [sectionHeading(s.label)];
 
     s.items.forEach((e, idx) => {
-        // Institution heading — no date on this line
         paras.push(
             new Paragraph({
                 spacing: { before: idx === 0 ? 100 : 200, after: 20 },
@@ -268,7 +292,6 @@ function buildEducation(s) {
         );
 
         if (e.degree) {
-            // Degree + optional honours subtitle on the next line; date right-aligned
             const degreeText = e.subtitle ? `${e.degree}. ${e.subtitle}` : e.degree;
             paras.push(
                 new Paragraph({
@@ -281,7 +304,6 @@ function buildEducation(s) {
                     ],
                 })
             );
-            // Details as plain (non-italic) paragraphs
             (e.details || []).forEach(d =>
                 paras.push(
                     new Paragraph({
@@ -291,7 +313,6 @@ function buildEducation(s) {
                 )
             );
         } else {
-            // No degree (e.g. Boot.dev): first detail is italic with date; rest are plain
             (e.details || []).forEach((d, di) =>
                 paras.push(
                     new Paragraph({
@@ -313,7 +334,6 @@ function buildEducation(s) {
     return paras;
 }
 
-// Plain bullet list: "Name, Issuer, Date" — matches the PDF's simple cert list
 function buildCertifications(s) {
     const paras = [sectionHeading(s.label), spacer(60, 0)];
     s.items.forEach(c =>
@@ -330,8 +350,6 @@ function buildCertifications(s) {
     return paras;
 }
 
-// ─── Dispatch ─────────────────────────────────────────────────────────────────
-
 const RENDERERS = {
     summary:        buildSummary,
     skills:         buildSkills,
@@ -341,50 +359,78 @@ const RENDERERS = {
     certifications: buildCertifications,
 };
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Document Factory Helper ──────────────────────────────────────────────────
+function createDocument(headerChildren, dataBody) {
+    const children = [
+        ...headerChildren,
+        ...dataBody.sections.flatMap(s => {
+            const fn = RENDERERS[s.type];
+            if (!fn) { console.warn(`Warning: no renderer for type "${s.type}" — skipped.`); return []; }
+            return fn(s);
+        }),
+    ];
 
-const data = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
-
-const children = [
-    ...buildHeader(data),
-    ...data.sections.flatMap(s => {
-        const fn = RENDERERS[s.type];
-        if (!fn) { console.warn(`Warning: no renderer for type "${s.type}" — skipped.`); return []; }
-        return fn(s);
-    }),
-];
-
-const doc = new Document({
-    numbering: {
-        config: [{
-            reference: 'bullets',
-            levels: [{
-                level: 0,
-                format: LevelFormat.BULLET,
-                text: '•',
-                alignment: AlignmentType.LEFT,
-                style: { paragraph: { indent: { left: 480, hanging: 240 } } },
+    return new Document({
+        numbering: {
+            config: [{
+                reference: 'bullets',
+                levels: [{
+                    level: 0,
+                    format: LevelFormat.BULLET,
+                    text: '•',
+                    alignment: AlignmentType.LEFT,
+                    style: { paragraph: { indent: { left: 480, hanging: 240 } } },
+                }],
             }],
-        }],
-    },
-    styles: {
-        default: { document: { run: { font: FONT, size: 20 } } },
-    },
-    sections: [{
-        properties: {
-            page: {
-                size:   { width: PAGE_W, height: PAGE_H },
-                margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN },
-            },
         },
-        children,
-    }],
-});
+        styles: {
+            default: { document: { run: { font: FONT, size: 20 } } },
+        },
+        sections: [{
+            properties: {
+                page: {
+                    size:   { width: PAGE_W, height: PAGE_H },
+                    margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN },
+                },
+            },
+            children,
+        }],
+    });
+}
 
-Packer.toBuffer(doc).then(buf => {
-    fs.writeFileSync(OUT_PATH, buf);
-    console.log(`✓  Written: ${OUT_PATH}`);
-}).catch(err => {
-    console.error('Build failed:', err.message);
-    process.exit(1);
-});
+// ─── Compilation Pipeline ────────────────────────────────────────────────────
+
+async function main() {
+    try {
+        const resumeData = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
+
+        // 1. Compile Public Document
+        console.log('Generating public resume...');
+        const publicHeader = buildHeader(resumeData, null);
+        const publicDoc = createDocument(publicHeader, resumeData);
+        const publicBuf = await Packer.toBuffer(publicDoc);
+        fs.writeFileSync(PUBLIC_OUT_PATH, publicBuf);
+        console.log(`✓  Written Public: ${PUBLIC_OUT_PATH}`);
+
+        // 2. Check for Secret Profile
+        if (!fs.existsSync(SECRET_PATH)) {
+            console.log('ℹ  No secret file discovered in .secret/. Skipping private run.');
+            return;
+        }
+
+        // 3. Compile Private Document
+        console.log('Generating private resume...');
+        const secretInfo = JSON.parse(fs.readFileSync(SECRET_PATH, 'utf8'));
+        const privateHeader = buildHeader(resumeData, secretInfo);
+        const privateDoc = createDocument(privateHeader, resumeData);
+        const privateBuf = await Packer.toBuffer(privateDoc);
+        fs.writeFileSync(PRIVATE_OUT_PATH, privateBuf);
+        console.log(`✓  Written Private: ${PRIVATE_OUT_PATH}`);
+
+    } catch (err) {
+        console.error('Build failed:', err.message);
+        process.exit(1);
+    }
+}
+
+main();
