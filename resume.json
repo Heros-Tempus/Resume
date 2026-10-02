@@ -89,6 +89,27 @@
             "type": "projects",
             "items": [
                 {
+                    "name": "Twitch Bot Microservices",
+                    "featured": true,
+                    "bullets": [
+                        "Architected a distributed, locally-hosted Twitch bot composed of specialized microservices in Go communicating via a central RabbitMQ message broker.",
+                        "Built a resilient EventSub WebSocket listener for real-time chat routing, proactively managing OAuth tokens and persisting state in a PostgreSQL database.",
+                        "Developed embedded local web servers to render dynamic HTML/CSS chat overlays and manage a YouTube media player queue.",
+                        "Interfaced directly with OBS Studio via WebSockets to automate scene item visibility and trigger audio ducking filters during media playback.",
+                        "Containerized the infrastructure using multi-stage Docker builds and orchestrated deployment via Docker Compose."
+                    ],
+                    "repo": "My-Twitch-Bot",
+                    "live": null,
+                    "tags": [
+                        "Go",
+                        "RabbitMQ",
+                        "PostgreSQL",
+                        "Docker",
+                        "Microservices",
+                        "WebSockets"
+                    ]
+                },
+                {
                     "name": "Gator",
                     "featured": true,
                     "bullets": [
